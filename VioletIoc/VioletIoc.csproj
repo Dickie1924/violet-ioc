@@ -9,6 +9,7 @@
     <Summary>A simple inversion of control container</Summary>
     <Title>Violet Ioc</Title>
     <Description>A simple inversion of control container</Description>
+    <PackageId>VioletIoc</PackageId>
   </PropertyGroup>
 
   <PropertyGroup>
