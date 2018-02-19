@@ -2,6 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <PackOnBuild>true</PackOnBuild>
+    <Authors>Laurence Hartgill</Authors>
+    <PackageLicenseUrl>https://github.com/laurence79/violet-ioc/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/laurence79/violet-ioc</PackageProjectUrl>
+    <Summary>A simple inversion of control container</Summary>
+    <Title>Violet Ioc</Title>
+    <Description>A simple inversion of control container</Description>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -18,6 +25,7 @@
 
   <ItemGroup>
     <PackageReference Include="StyleCop.Analyzers" Version="1.0.2" />
+    <PackageReference Include="NuGet.Build.Packaging" Version="0.2.0" />
   </ItemGroup>
     
 </Project>
