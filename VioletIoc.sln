@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VioletIoc", "VioletIoc\VioletIoc.csproj", "{AAE6DDD4-2CA0-4CA5-99FB-C51A7F4537B5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VioletIoc.UnitTests", "VioletIoc.UnitTests\VioletIoc.UnitTests.csproj", "{C9AD0D1D-A985-4DEA-B69C-04D5ED89E2CE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -13,5 +15,9 @@ Global
 		{AAE6DDD4-2CA0-4CA5-99FB-C51A7F4537B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AAE6DDD4-2CA0-4CA5-99FB-C51A7F4537B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AAE6DDD4-2CA0-4CA5-99FB-C51A7F4537B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9AD0D1D-A985-4DEA-B69C-04D5ED89E2CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9AD0D1D-A985-4DEA-B69C-04D5ED89E2CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9AD0D1D-A985-4DEA-B69C-04D5ED89E2CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9AD0D1D-A985-4DEA-B69C-04D5ED89E2CE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

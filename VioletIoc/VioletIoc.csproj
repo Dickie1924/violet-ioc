@@ -23,6 +23,10 @@
     <DocumentationFile>bin\Release\netstandard2.0\VioletIoc.xml</DocumentationFile>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup> 
+
   <ItemGroup>
     <PackageReference Include="StyleCop.Analyzers" Version="1.0.2" />
     <PackageReference Include="NuGet.Build.Packaging" Version="0.2.0" />
