@@ -10,8 +10,8 @@
     <Title>Violet Ioc</Title>
     <Description>A simple inversion of control container</Description>
     <PackageId>VioletIoc</PackageId>
-    <PackageVersion>1.0</PackageVersion>
-    <ReleaseVersion>1.0</ReleaseVersion>
+    <PackageVersion>1.1</PackageVersion>
+    <ReleaseVersion>1.1</ReleaseVersion>
     <SynchReleaseVersion>false</SynchReleaseVersion>
   </PropertyGroup>
 
@@ -23,17 +23,15 @@
     <CodeAnalysisRuleSet>StyleCop.Analyzers.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DocumentationFile>bin\Debug\netstandard2.0\VioletIoc.xml</DocumentationFile>
-  </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType></DebugType>
-    <DocumentationFile>bin\Release\netstandard2.0\VioletIoc.xml</DocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
-
+    
   <ItemGroup>
     <PackageReference Include="StyleCop.Analyzers" Version="1.0.2" PrivateAssets="All" />
     <PackageReference Include="NuGet.Build.Packaging" Version="0.2.0" />
+    <PackageReference Include="NETStandard.Library" Version="2.0.1" />
   </ItemGroup>
     
 </Project>
