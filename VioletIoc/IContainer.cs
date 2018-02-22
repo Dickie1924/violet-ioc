@@ -71,6 +71,23 @@ namespace VioletIoc
             where TInterface : class;
 
         /// <summary>
+        /// Register the specified interfaceType and asType.
+        /// </summary>
+        /// <returns>The register.</returns>
+        /// <param name="interfaceType">Interface type.</param>
+        /// <param name="asType">As type.</param>
+        IContainer Register(Type interfaceType, Type asType);
+
+        /// <summary>
+        /// Register the specified interfaceType, asType and key.
+        /// </summary>
+        /// <returns>The register.</returns>
+        /// <param name="interfaceType">Interface type.</param>
+        /// <param name="asType">As type.</param>
+        /// <param name="key">Key.</param>
+        IContainer Register(Type interfaceType, Type asType, string key);
+
+        /// <summary>
         /// Registers the singleton.
         /// </summary>
         /// <returns>The singleton.</returns>

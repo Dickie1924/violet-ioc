@@ -51,6 +51,17 @@ namespace VioletIoc
             }
         }
 
+        public Registration MakeClosedGeneric(Type[] typeArguments)
+        {
+            if (!_concreteType.IsGenericTypeDefinition)
+            {
+                throw new InvalidOperationException("Registration is not for a open generic");
+            }
+
+            typeArguments.ThrowIfNull(nameof(typeArguments));
+            return new Registration(_concreteType.MakeGenericType(typeArguments), _isSingleton);
+        }
+
         protected void Resolve(object instance)
         {
             _instance = instance;

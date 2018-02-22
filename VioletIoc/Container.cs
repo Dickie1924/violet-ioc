@@ -13,7 +13,7 @@ namespace VioletIoc
         private readonly string _traceName;
         private readonly bool _traceEnabled;
         private readonly Container _parent;
-        private readonly Dictionary<Key, Registration> _registrations = new Dictionary<Key, Registration>();
+        private readonly Dictionary<RegistrationKey, Registration> _registrations = new Dictionary<RegistrationKey, Registration>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VioletIoc.Container"/> class.
@@ -286,7 +286,7 @@ namespace VioletIoc
         {
             type.ThrowIfNull(nameof(type));
 
-            var k = new Key(type, key);
+            var k = new RegistrationKey(type, key);
 
             return _registrations.ContainsKey(k);
         }
@@ -313,7 +313,7 @@ namespace VioletIoc
             where TInterface : class
             where TType : class, TInterface
         {
-            var k = new Key(typeof(TInterface), key);
+            var k = new RegistrationKey(typeof(TInterface), key);
 
             _registrations[k] = new Registration(typeof(TType), false);
 
@@ -340,7 +340,7 @@ namespace VioletIoc
         public IContainer Register<TInterface>(Func<IContainer, TInterface> factory, string key)
             where TInterface : class
         {
-            var k = new Key(typeof(TInterface), key);
+            var k = new RegistrationKey(typeof(TInterface), key);
 
             _registrations[k] = FactoryRegistration<TInterface>.Create(factory, false);
 
@@ -367,9 +367,34 @@ namespace VioletIoc
         public IContainer Register<TInterface>(Func<IContainer, ResolutionContext, TInterface> factory, string key)
             where TInterface : class
         {
-            var k = new Key(typeof(TInterface), key);
+            var k = new RegistrationKey(typeof(TInterface), key);
 
             _registrations[k] = FactoryRegistration<TInterface>.Create(factory, false);
+
+            return this;
+        }
+
+        /// <summary>
+        /// Register the specified interfaceType and asType.
+        /// </summary>
+        /// <returns>The register.</returns>
+        /// <param name="interfaceType">Interface type.</param>
+        /// <param name="asType">As type.</param>
+        public IContainer Register(Type interfaceType, Type asType)
+            => Register(interfaceType, asType, (string)null);
+
+        /// <summary>
+        /// Register the specified interfaceType, asType and key.
+        /// </summary>
+        /// <returns>The register.</returns>
+        /// <param name="interfaceType">Interface type.</param>
+        /// <param name="asType">As type.</param>
+        /// <param name="key">Key.</param>
+        public IContainer Register(Type interfaceType, Type asType, string key)
+        {
+            var k = new RegistrationKey(interfaceType, key);
+
+            _registrations[k] = new Registration(asType, false);
 
             return this;
         }
@@ -394,7 +419,7 @@ namespace VioletIoc
         public IContainer RegisterSingleton<TType>(TType instance, string key)
             where TType : class
         {
-            var k = new Key(typeof(TType), key);
+            var k = new RegistrationKey(typeof(TType), key);
 
             _registrations[k] = new Registration(instance);
 
@@ -430,7 +455,7 @@ namespace VioletIoc
         public IContainer RegisterSingleton<TInterface, TType>(string key)
             where TType : class, TInterface
         {
-            var k = new Key(typeof(TInterface), key);
+            var k = new RegistrationKey(typeof(TInterface), key);
 
             _registrations[k] = new Registration(typeof(TType), true);
 
@@ -459,7 +484,7 @@ namespace VioletIoc
         public IContainer RegisterSingleton<TInterface, TType>(TType instance, string key)
             where TType : class, TInterface
         {
-            var k = new Key(typeof(TInterface), key);
+            var k = new RegistrationKey(typeof(TInterface), key);
 
             _registrations[k] = new Registration(instance);
 
@@ -486,7 +511,7 @@ namespace VioletIoc
         public IContainer RegisterSingleton<TType>(Func<IContainer, TType> factory, string key)
             where TType : class
         {
-            var k = new Key(typeof(TType), key);
+            var k = new RegistrationKey(typeof(TType), key);
 
             _registrations[k] = FactoryRegistration<TType>.Create(factory, true);
 
@@ -513,7 +538,7 @@ namespace VioletIoc
         public IContainer RegisterSingleton<TType>(Func<IContainer, ResolutionContext, TType> factory, string key)
             where TType : class
         {
-            var k = new Key(typeof(TType), key);
+            var k = new RegistrationKey(typeof(TType), key);
 
             _registrations[k] = FactoryRegistration<TType>.Create(factory, true);
 
@@ -542,7 +567,7 @@ namespace VioletIoc
         public IContainer RegisterSingleton<TInterface, TType>(Func<IContainer, TType> factory, string key)
             where TType : class, TInterface
         {
-            var k = new Key(typeof(TInterface), key);
+            var k = new RegistrationKey(typeof(TInterface), key);
 
             _registrations[k] = FactoryRegistration<TType>.Create(factory, true);
 
@@ -571,7 +596,7 @@ namespace VioletIoc
         public IContainer RegisterSingleton<TInterface, TType>(Func<IContainer, ResolutionContext, TType> factory, string key)
             where TType : class, TInterface
         {
-            var k = new Key(typeof(TInterface), key);
+            var k = new RegistrationKey(typeof(TInterface), key);
 
             _registrations[k] = FactoryRegistration<TType>.Create(factory, true);
 
@@ -594,7 +619,7 @@ namespace VioletIoc
         /// <param name="key">Key.</param>
         public IContainer RegisterSingleton(Type asType, string key)
         {
-            var k = new Key(asType, key);
+            var k = new RegistrationKey(asType, key);
 
             _registrations[k] = new Registration(asType, true);
 
@@ -619,7 +644,7 @@ namespace VioletIoc
         /// <param name="key">Key.</param>
         public IContainer RegisterSingleton(Type interfaceType, Type asType, string key)
         {
-            var k = new Key(interfaceType, key);
+            var k = new RegistrationKey(interfaceType, key);
 
             _registrations[k] = new Registration(asType, true);
 
@@ -644,7 +669,7 @@ namespace VioletIoc
         /// <param name="key">Key.</param>
         public IContainer RegisterSingleton(Type interfaceType, object instance, string key)
         {
-            var k = new Key(interfaceType, key);
+            var k = new RegistrationKey(interfaceType, key);
 
             _registrations[k] = new Registration(instance);
 
@@ -761,11 +786,20 @@ namespace VioletIoc
                 context = new ResolutionContext(type, context);
             }
 
-            var k = new Key(type, key);
+            var k = new RegistrationKey(type, key);
 
             if (_registrations.ContainsKey(k))
             {
                 tracer?.Add($"Using local registration...");
+                obj = _registrations[k].GetObject(tracer, context, locator, overrides);
+            }
+            else if (k.TryMakeOpenGeneric(out var openGenericKey) && _registrations.ContainsKey(openGenericKey))
+            {
+                var openReg = _registrations[openGenericKey];
+                var closedReg = openReg.MakeClosedGeneric(k.Type.GenericTypeArguments);
+
+                _registrations.Add(k, closedReg);
+
                 obj = _registrations[k].GetObject(tracer, context, locator, overrides);
             }
             else if (_parent != null && _parent.TryGet(type, key, out object parentObj, tracer?.CreateChild(_parent.TraceName), locator, context, overrides))
@@ -797,27 +831,41 @@ namespace VioletIoc
             return true;
         }
 
-        private struct Key
+        private struct RegistrationKey
         {
             private readonly Type _type;
             private readonly string _key;
 
-            public Key(Type type, string key)
+            public RegistrationKey(Type type, string key)
             {
-                type.ThrowIfNull(nameof(type));
-
                 _type = type;
                 _key = key;
             }
 
-            public static implicit operator Type(Key k)
+            public Type Type => _type;
+
+            public string Key => _key;
+
+            public static implicit operator Type(RegistrationKey k)
             {
                 return k._type;
             }
 
-            public static implicit operator Key(Type t)
+            public static implicit operator RegistrationKey(Type t)
             {
-                return new Key(t, null);
+                return new RegistrationKey(t, null);
+            }
+
+            public bool TryMakeOpenGeneric(out RegistrationKey genericRegistrationKey)
+            {
+                if (_type.IsGenericType)
+                {
+                    genericRegistrationKey = new RegistrationKey(_type.GetGenericTypeDefinition(), _key);
+                    return true;
+                }
+
+                genericRegistrationKey = null;
+                return false;
             }
         }
     }
