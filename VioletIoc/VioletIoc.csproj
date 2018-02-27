@@ -10,8 +10,8 @@
     <Title>Violet Ioc</Title>
     <Description>A simple inversion of control container</Description>
     <PackageId>VioletIoc</PackageId>
-    <PackageVersion>1.1</PackageVersion>
-    <ReleaseVersion>1.1</ReleaseVersion>
+    <PackageVersion>1.2</PackageVersion>
+    <ReleaseVersion>1.2</ReleaseVersion>
     <SynchReleaseVersion>false</SynchReleaseVersion>
   </PropertyGroup>
 
@@ -31,7 +31,7 @@
   <ItemGroup>
     <PackageReference Include="StyleCop.Analyzers" Version="1.0.2" PrivateAssets="All" />
     <PackageReference Include="NuGet.Build.Packaging" Version="0.2.0" />
-    <PackageReference Include="NETStandard.Library" Version="2.0.1" />
+    <PackageReference Include="NETStandard.Library" Version="2.0.0" />
   </ItemGroup>
     
 </Project>
