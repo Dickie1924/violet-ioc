@@ -5,10 +5,7 @@ using System.Reflection;
 
 namespace VioletIoc
 {
-    /// <summary>
-    /// Container.
-    /// </summary>
-    public class Container : IContainer
+    internal class Container : IContainer
     {
         private readonly string _traceName;
         private readonly bool _traceEnabled;
@@ -18,114 +15,60 @@ namespace VioletIoc
 
         private bool _disposed;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="VioletIoc.Container"/> class.
-        /// </summary>
         public Container()
             : this(null, null)
         {
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="VioletIoc.Container"/> class.
-        /// </summary>
-        /// <param name="parent">Parent.</param>
         public Container(Container parent)
             : this(parent, null)
         {
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="VioletIoc.Container"/> class.
-        /// </summary>
-        /// <param name="parent">Parent.</param>
-        /// <param name="traceName">Trace name.</param>
         public Container(Container parent, string traceName)
         {
             _parent = parent;
             _traceName = traceName;
             _traceEnabled = traceName != null;
 
-            RegisterSingleton<IContainer>(this);
+            // Resolving an IContainer creates a child of the current container.
+            Register<IContainer>(c => c.CreateChildContainer());
+
+            // Resolving a Container get's this (needed by Resolver<T>)
+            RegisterSingleton<Container>(this);
+
             Register(typeof(IResolver<>), typeof(Resolver<>));
         }
 
-        /// <summary>
-        /// Gets the name of the trace.
-        /// </summary>
-        /// <value>The name of the trace.</value>
         public string TraceName => _traceName;
 
-        /// <summary>
-        /// Creates the instance.
-        /// </summary>
-        /// <returns>The instance.</returns>
-        /// <param name="type">Type.</param>
-        /// <param name="overrides">Overrides.</param>
         public object CreateInstance(Type type, params IParameterOverride[] overrides)
             => CreateInstance(type, null, null, overrides);
 
-        /// <summary>
-        /// Creates the instance.
-        /// </summary>
-        /// <returns>The instance.</returns>
-        /// <param name="overrides">Overrides.</param>
-        /// <typeparam name="T">The 1st type parameter.</typeparam>
         public T CreateInstance<T>(params IParameterOverride[] overrides)
             where T : class
         {
             return CreateInstance(typeof(T), overrides) as T;
         }
 
-        /// <summary>
-        /// Resolve the specified overrides.
-        /// </summary>
-        /// <returns>The resolve.</returns>
-        /// <param name="overrides">Overrides.</param>
-        /// <typeparam name="T">The 1st type parameter.</typeparam>
         public T Resolve<T>(params IParameterOverride[] overrides)
             where T : class
             => Resolve(typeof(T), overrides) as T;
 
-        /// <summary>
-        /// Resolve the specified key and overrides.
-        /// </summary>
-        /// <returns>The resolve.</returns>
-        /// <param name="key">Key.</param>
-        /// <param name="overrides">Overrides.</param>
-        /// <typeparam name="T">The 1st type parameter.</typeparam>
         public T Resolve<T>(string key, params IParameterOverride[] overrides)
             where T : class
             => Resolve(typeof(T), key, overrides) as T;
 
-        /// <summary>
-        /// Creates a resolver.
-        /// </summary>
-        /// <returns>The resolver.</returns>
-        /// <typeparam name="T">The 1st type parameter.</typeparam>
         public IResolver<T> ResolverFor<T>()
             where T : class
         {
             return new Resolver<T>(this);
         }
 
-        /// <summary>
-        /// Resolves the or default.
-        /// </summary>
-        /// <returns>The or default.</returns>
-        /// <param name="overrides">Overrides.</param>
-        /// <typeparam name="T">The 1st type parameter.</typeparam>
         public T ResolveOrDefault<T>(params IParameterOverride[] overrides)
             where T : class
             => ResolveOrDefault<T>(null, overrides);
 
-        /// <summary>
-        /// Resolves the or default.
-        /// </summary>
-        /// <returns>The or default.</returns>
-        /// <param name="key">Key.</param>
-        /// <param name="overrides">Overrides.</param>
-        /// <typeparam name="T">The 1st type parameter.</typeparam>
         public T ResolveOrDefault<T>(string key, params IParameterOverride[] overrides)
             where T : class
         {
@@ -140,25 +83,10 @@ namespace VioletIoc
             }
         }
 
-        /// <summary>
-        /// Tries the resolve.
-        /// </summary>
-        /// <returns><c>true</c>, if resolve was tryed, <c>false</c> otherwise.</returns>
-        /// <param name="obj">Object.</param>
-        /// <param name="overrides">Overrides.</param>
-        /// <typeparam name="T">The 1st type parameter.</typeparam>
         public bool TryResolve<T>(out T obj, params IParameterOverride[] overrides)
             where T : class
         => TryResolve<T>(null, out obj, overrides);
 
-        /// <summary>
-        /// Tries the resolve.
-        /// </summary>
-        /// <returns><c>true</c>, if resolve was tryed, <c>false</c> otherwise.</returns>
-        /// <param name="key">Key.</param>
-        /// <param name="obj">Object.</param>
-        /// <param name="overrides">Overrides.</param>
-        /// <typeparam name="T">The 1st type parameter.</typeparam>
         public bool TryResolve<T>(string key, out T obj, params IParameterOverride[] overrides)
             where T : class
         {
@@ -174,43 +102,15 @@ namespace VioletIoc
             }
         }
 
-        /// <summary>
-        /// Tries the resolve.
-        /// </summary>
-        /// <returns><c>true</c>, if resolve was tryed, <c>false</c> otherwise.</returns>
-        /// <param name="type">Type.</param>
-        /// <param name="obj">Object.</param>
-        /// <param name="overrides">Overrides.</param>
         public bool TryResolve(Type type, out object obj, params IParameterOverride[] overrides)
             => TryGet(type, null, out obj, null, this, null, overrides);
 
-        /// <summary>
-        /// Tries the resolve.
-        /// </summary>
-        /// <returns><c>true</c>, if resolve was tryed, <c>false</c> otherwise.</returns>
-        /// <param name="type">Type.</param>
-        /// <param name="key">Key.</param>
-        /// <param name="obj">Object.</param>
-        /// <param name="overrides">Overrides.</param>
         public bool TryResolve(Type type, string key, out object obj, params IParameterOverride[] overrides)
             => TryGet(type, key, out obj, null, this, null, overrides);
 
-        /// <summary>
-        /// Resolve the specified type and overrides.
-        /// </summary>
-        /// <returns>The resolve.</returns>
-        /// <param name="type">Type.</param>
-        /// <param name="overrides">Overrides.</param>
         public object Resolve(Type type, params IParameterOverride[] overrides)
             => Resolve(type, null, overrides);
 
-        /// <summary>
-        /// Resolve the specified type, key and overrides.
-        /// </summary>
-        /// <returns>The resolve.</returns>
-        /// <param name="type">Type.</param>
-        /// <param name="key">Key.</param>
-        /// <param name="overrides">Overrides.</param>
         public object Resolve(Type type, string key, params IParameterOverride[] overrides)
         {
             object obj;
@@ -224,16 +124,8 @@ namespace VioletIoc
             }
         }
 
-        /// <summary>
-        /// Gets the parent container.
-        /// </summary>
-        /// <returns>The parent container.</returns>
         public IContainer GetParentContainer() => _parent;
 
-        /// <summary>
-        /// Gets the root container.
-        /// </summary>
-        /// <returns>The root container.</returns>
         public IContainer GetRootContainer()
         {
             var s = this as IContainer;
@@ -245,37 +137,15 @@ namespace VioletIoc
             return s;
         }
 
-        /// <summary>
-        /// Cans the resolve.
-        /// </summary>
-        /// <returns><c>true</c>, if resolve was caned, <c>false</c> otherwise.</returns>
-        /// <typeparam name="T">The 1st type parameter.</typeparam>
         public bool CanResolve<T>()
             => CanResolve(typeof(T), null);
 
-        /// <summary>
-        /// Cans the resolve.
-        /// </summary>
-        /// <returns><c>true</c>, if resolve was caned, <c>false</c> otherwise.</returns>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="T">The 1st type parameter.</typeparam>
         public bool CanResolve<T>(string key)
             => CanResolve(typeof(T), key);
 
-        /// <summary>
-        /// Cans the resolve.
-        /// </summary>
-        /// <returns><c>true</c>, if resolve was caned, <c>false</c> otherwise.</returns>
-        /// <param name="type">Type.</param>
         public bool CanResolve(Type type)
             => CanResolve(type, null);
 
-        /// <summary>
-        /// Cans the resolve.
-        /// </summary>
-        /// <returns><c>true</c>, if resolve was caned, <c>false</c> otherwise.</returns>
-        /// <param name="type">Type.</param>
-        /// <param name="key">Key.</param>
         public bool CanResolve(Type type, string key)
         {
             type.ThrowIfNull(nameof(type));
@@ -284,20 +154,9 @@ namespace VioletIoc
                 || (_parent != null && _parent.CanResolve(type, key));
         }
 
-        /// <summary>
-        /// Cans the resolve locally.
-        /// </summary>
-        /// <returns><c>true</c>, if resolve locally was caned, <c>false</c> otherwise.</returns>
-        /// <param name="type">Type.</param>
         public bool CanResolveLocally(Type type)
             => CanResolveLocally(type, null);
 
-        /// <summary>
-        /// Cans the resolve locally.
-        /// </summary>
-        /// <returns><c>true</c>, if resolve locally was caned, <c>false</c> otherwise.</returns>
-        /// <param name="type">Type.</param>
-        /// <param name="key">Key.</param>
         public bool CanResolveLocally(Type type, string key)
         {
             type.ThrowIfNull(nameof(type));
@@ -308,24 +167,11 @@ namespace VioletIoc
             return _registrations.ContainsKey(k);
         }
 
-        /// <summary>
-        /// Register this instance.
-        /// </summary>
-        /// <returns>The register.</returns>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
         public IContainer Register<TInterface, TType>()
             where TInterface : class
             where TType : class, TInterface
             => Register<TInterface, TType>((string)null);
 
-        /// <summary>
-        /// Register the specified key.
-        /// </summary>
-        /// <returns>The register.</returns>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
         public IContainer Register<TInterface, TType>(string key)
             where TInterface : class
             where TType : class, TInterface
@@ -338,23 +184,10 @@ namespace VioletIoc
             return this;
         }
 
-        /// <summary>
-        /// Register the specified factory.
-        /// </summary>
-        /// <returns>The register.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
         public IContainer Register<TInterface>(Func<IContainer, TInterface> factory)
             where TInterface : class
             => Register<TInterface>(factory, (string)null);
 
-        /// <summary>
-        /// Register the specified factory and key.
-        /// </summary>
-        /// <returns>The register.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
         public IContainer Register<TInterface>(Func<IContainer, TInterface> factory, string key)
             where TInterface : class
         {
@@ -366,23 +199,10 @@ namespace VioletIoc
             return this;
         }
 
-        /// <summary>
-        /// Register the specified factory.
-        /// </summary>
-        /// <returns>The register.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
         public IContainer Register<TInterface>(Func<IContainer, ResolutionContext, TInterface> factory)
             where TInterface : class
             => Register<TInterface>(factory, (string)null);
 
-        /// <summary>
-        /// Register the specified factory and key.
-        /// </summary>
-        /// <returns>The register.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
         public IContainer Register<TInterface>(Func<IContainer, ResolutionContext, TInterface> factory, string key)
             where TInterface : class
         {
@@ -394,22 +214,9 @@ namespace VioletIoc
             return this;
         }
 
-        /// <summary>
-        /// Register the specified interfaceType and asType.
-        /// </summary>
-        /// <returns>The register.</returns>
-        /// <param name="interfaceType">Interface type.</param>
-        /// <param name="asType">As type.</param>
         public IContainer Register(Type interfaceType, Type asType)
             => Register(interfaceType, asType, (string)null);
 
-        /// <summary>
-        /// Register the specified interfaceType, asType and key.
-        /// </summary>
-        /// <returns>The register.</returns>
-        /// <param name="interfaceType">Interface type.</param>
-        /// <param name="asType">As type.</param>
-        /// <param name="key">Key.</param>
         public IContainer Register(Type interfaceType, Type asType, string key)
         {
             ThrowIfDisposed();
@@ -420,23 +227,10 @@ namespace VioletIoc
             return this;
         }
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="instance">Instance.</param>
-        /// <typeparam name="TType">The 1st type parameter.</typeparam>
         public IContainer RegisterSingleton<TType>(TType instance)
             where TType : class
             => RegisterSingleton<TType>(instance, (string)null);
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="instance">Instance.</param>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TType">The 1st type parameter.</typeparam>
         public IContainer RegisterSingleton<TType>(TType instance, string key)
             where TType : class
         {
@@ -448,32 +242,14 @@ namespace VioletIoc
             return this;
         }
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <typeparam name="TType">The 1st type parameter.</typeparam>
         public IContainer RegisterSingleton<TType>()
             where TType : class
             => RegisterSingleton<TType, TType>((string)null);
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
         public IContainer RegisterSingleton<TInterface, TType>()
             where TType : class, TInterface
         => RegisterSingleton<TInterface, TType>((string)null);
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
         public IContainer RegisterSingleton<TInterface, TType>(string key)
             where TType : class, TInterface
         {
@@ -485,25 +261,10 @@ namespace VioletIoc
             return this;
         }
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="instance">Instance.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
         public IContainer RegisterSingleton<TInterface, TType>(TType instance)
             where TType : class, TInterface
             => RegisterSingleton<TInterface, TType>(instance, (string)null);
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="instance">Instance.</param>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
         public IContainer RegisterSingleton<TInterface, TType>(TType instance, string key)
             where TType : class, TInterface
         {
@@ -515,23 +276,10 @@ namespace VioletIoc
             return this;
         }
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <typeparam name="TType">The 1st type parameter.</typeparam>
         public IContainer RegisterSingleton<TType>(Func<IContainer, TType> factory)
             where TType : class
             => RegisterSingleton<TType>(factory, (string)null);
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TType">The 1st type parameter.</typeparam>
         public IContainer RegisterSingleton<TType>(Func<IContainer, TType> factory, string key)
             where TType : class
         {
@@ -543,23 +291,10 @@ namespace VioletIoc
             return this;
         }
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <typeparam name="TType">The 1st type parameter.</typeparam>
         public IContainer RegisterSingleton<TType>(Func<IContainer, ResolutionContext, TType> factory)
             where TType : class
             => RegisterSingleton<TType>(factory, (string)null);
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TType">The 1st type parameter.</typeparam>
         public IContainer RegisterSingleton<TType>(Func<IContainer, ResolutionContext, TType> factory, string key)
             where TType : class
         {
@@ -571,25 +306,10 @@ namespace VioletIoc
             return this;
         }
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
         public IContainer RegisterSingleton<TInterface, TType>(Func<IContainer, TType> factory)
             where TType : class, TInterface
             => RegisterSingleton<TInterface, TType>(factory, (string)null);
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
         public IContainer RegisterSingleton<TInterface, TType>(Func<IContainer, TType> factory, string key)
             where TType : class, TInterface
         {
@@ -601,25 +321,10 @@ namespace VioletIoc
             return this;
         }
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
         public IContainer RegisterSingleton<TInterface, TType>(Func<IContainer, ResolutionContext, TType> factory)
             where TType : class, TInterface
             => RegisterSingleton<TInterface, TType>(factory, (string)null);
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
         public IContainer RegisterSingleton<TInterface, TType>(Func<IContainer, ResolutionContext, TType> factory, string key)
             where TType : class, TInterface
         {
@@ -631,20 +336,9 @@ namespace VioletIoc
             return this;
         }
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="asType">As type.</param>
         public IContainer RegisterSingleton(Type asType)
             => RegisterSingleton(asType, (string)null);
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="asType">As type.</param>
-        /// <param name="key">Key.</param>
         public IContainer RegisterSingleton(Type asType, string key)
         {
             ThrowIfDisposed();
@@ -655,22 +349,9 @@ namespace VioletIoc
             return this;
         }
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="interfaceType">Interface type.</param>
-        /// <param name="asType">As type.</param>
         public IContainer RegisterSingleton(Type interfaceType, Type asType)
             => RegisterSingleton(interfaceType, asType, (string)null);
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="interfaceType">Interface type.</param>
-        /// <param name="asType">As type.</param>
-        /// <param name="key">Key.</param>
         public IContainer RegisterSingleton(Type interfaceType, Type asType, string key)
         {
             ThrowIfDisposed();
@@ -681,22 +362,9 @@ namespace VioletIoc
             return this;
         }
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="interfaceType">Interface type.</param>
-        /// <param name="instance">Instance.</param>
         public IContainer RegisterSingleton(Type interfaceType, object instance)
             => RegisterSingleton(interfaceType, instance, (string)null);
 
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="interfaceType">Interface type.</param>
-        /// <param name="instance">Instance.</param>
-        /// <param name="key">Key.</param>
         public IContainer RegisterSingleton(Type interfaceType, object instance, string key)
         {
             ThrowIfDisposed();
@@ -707,22 +375,11 @@ namespace VioletIoc
             return this;
         }
 
-        /// <summary>
-        /// Creates a child container.
-        /// </summary>
-        /// <returns>The child container.</returns>
         public IContainer CreateChildContainer()
         {
             return new Container(this, _traceName);
         }
 
-        /// <summary>
-        /// Releases all resource used by the <see cref="VioletIoc.Container"/> object.
-        /// </summary>
-        /// <remarks>Call <see cref="Dispose()"/> when you are finished using the <see cref="T:VioletIoc.Container"/>. The
-        /// <see cref="Dispose()"/> method leaves the <see cref="T:VioletIoc.Container"/> in an unusable state. After
-        /// calling <see cref="Dispose()"/>, you must release all references to the <see cref="T:VioletIoc.Container"/> so
-        /// the garbage collector can reclaim the memory that the <see cref="T:VioletIoc.Container"/> was occupying.</remarks>
         public void Dispose()
         {
             Dispose(true);
@@ -889,10 +546,6 @@ namespace VioletIoc
             return true;
         }
 
-        /// <summary>
-        /// Dispose
-        /// </summary>
-        /// <param name="disposing">If set to <c>true</c> disposing.</param>
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposed)

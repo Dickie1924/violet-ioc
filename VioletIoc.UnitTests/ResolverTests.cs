@@ -9,7 +9,7 @@ namespace VioletIoc.UnitTests
         public void Resolver_ResolvesToInstance()
         {
             var service = new TestService();
-            var locator = new Container();
+            var locator = ContainerFactory.CreateRootContainer();  
             locator.RegisterSingleton<ITestService>(service);
 
             var instance = locator.ResolverFor<ITestService>().Resolve();

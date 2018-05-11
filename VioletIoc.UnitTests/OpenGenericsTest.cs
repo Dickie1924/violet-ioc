@@ -8,7 +8,7 @@ namespace VioletIoc.UnitTests
         [Fact]
         public void Works()
         {
-            var container = new Container();
+            var container = ContainerFactory.CreateRootContainer();  
             container.Register(typeof(ISpeaker<>), typeof(Speaker<>));
 
             var catSpeaker = container.Resolve<ISpeaker<Cat>>();
