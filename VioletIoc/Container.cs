@@ -45,7 +45,9 @@ namespace VioletIoc
             _parent = parent;
             _traceName = traceName;
             _traceEnabled = traceName != null;
+
             RegisterSingleton<IContainer>(this);
+            Register(typeof(IResolver<>), typeof(Resolver<>));
         }
 
         /// <summary>
@@ -95,6 +97,17 @@ namespace VioletIoc
         public T Resolve<T>(string key, params IParameterOverride[] overrides)
             where T : class
             => Resolve(typeof(T), key, overrides) as T;
+
+        /// <summary>
+        /// Creates a resolver.
+        /// </summary>
+        /// <returns>The resolver.</returns>
+        /// <typeparam name="T">The 1st type parameter.</typeparam>
+        public IResolver<T> ResolverFor<T>()
+            where T : class
+        {
+            return new Resolver<T>(this);
+        }
 
         /// <summary>
         /// Resolves the or default.

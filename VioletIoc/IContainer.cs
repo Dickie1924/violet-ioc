@@ -303,6 +303,14 @@ namespace VioletIoc
             where T : class;
 
         /// <summary>
+        /// Creates a resolver.
+        /// </summary>
+        /// <returns>The resolver.</returns>
+        /// <typeparam name="T">The 1st type parameter.</typeparam>
+        IResolver<T> ResolverFor<T>()
+            where T : class;
+
+        /// <summary>
         /// Resolve the specified type and overrides.
         /// </summary>
         /// <returns>The resolve.</returns>
