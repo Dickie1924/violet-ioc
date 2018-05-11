@@ -14,6 +14,9 @@ namespace VioletIoc
         private readonly bool _traceEnabled;
         private readonly Container _parent;
         private readonly Dictionary<RegistrationKey, Registration> _registrations = new Dictionary<RegistrationKey, Registration>();
+        private readonly HashSet<IDisposable> _disposables = new HashSet<IDisposable>();
+
+        private bool _disposed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VioletIoc.Container"/> class.
@@ -285,6 +288,7 @@ namespace VioletIoc
         public bool CanResolveLocally(Type type, string key)
         {
             type.ThrowIfNull(nameof(type));
+            ThrowIfDisposed();
 
             var k = new RegistrationKey(type, key);
 
@@ -313,6 +317,7 @@ namespace VioletIoc
             where TInterface : class
             where TType : class, TInterface
         {
+            ThrowIfDisposed();
             var k = new RegistrationKey(typeof(TInterface), key);
 
             _registrations[k] = new Registration(typeof(TType), false);
@@ -340,6 +345,7 @@ namespace VioletIoc
         public IContainer Register<TInterface>(Func<IContainer, TInterface> factory, string key)
             where TInterface : class
         {
+            ThrowIfDisposed();
             var k = new RegistrationKey(typeof(TInterface), key);
 
             _registrations[k] = FactoryRegistration<TInterface>.Create(factory, false);
@@ -367,6 +373,7 @@ namespace VioletIoc
         public IContainer Register<TInterface>(Func<IContainer, ResolutionContext, TInterface> factory, string key)
             where TInterface : class
         {
+            ThrowIfDisposed();
             var k = new RegistrationKey(typeof(TInterface), key);
 
             _registrations[k] = FactoryRegistration<TInterface>.Create(factory, false);
@@ -392,6 +399,7 @@ namespace VioletIoc
         /// <param name="key">Key.</param>
         public IContainer Register(Type interfaceType, Type asType, string key)
         {
+            ThrowIfDisposed();
             var k = new RegistrationKey(interfaceType, key);
 
             _registrations[k] = new Registration(asType, false);
@@ -419,6 +427,7 @@ namespace VioletIoc
         public IContainer RegisterSingleton<TType>(TType instance, string key)
             where TType : class
         {
+            ThrowIfDisposed();
             var k = new RegistrationKey(typeof(TType), key);
 
             _registrations[k] = new Registration(instance);
@@ -455,6 +464,7 @@ namespace VioletIoc
         public IContainer RegisterSingleton<TInterface, TType>(string key)
             where TType : class, TInterface
         {
+            ThrowIfDisposed();
             var k = new RegistrationKey(typeof(TInterface), key);
 
             _registrations[k] = new Registration(typeof(TType), true);
@@ -484,6 +494,7 @@ namespace VioletIoc
         public IContainer RegisterSingleton<TInterface, TType>(TType instance, string key)
             where TType : class, TInterface
         {
+            ThrowIfDisposed();
             var k = new RegistrationKey(typeof(TInterface), key);
 
             _registrations[k] = new Registration(instance);
@@ -511,6 +522,7 @@ namespace VioletIoc
         public IContainer RegisterSingleton<TType>(Func<IContainer, TType> factory, string key)
             where TType : class
         {
+            ThrowIfDisposed();
             var k = new RegistrationKey(typeof(TType), key);
 
             _registrations[k] = FactoryRegistration<TType>.Create(factory, true);
@@ -538,6 +550,7 @@ namespace VioletIoc
         public IContainer RegisterSingleton<TType>(Func<IContainer, ResolutionContext, TType> factory, string key)
             where TType : class
         {
+            ThrowIfDisposed();
             var k = new RegistrationKey(typeof(TType), key);
 
             _registrations[k] = FactoryRegistration<TType>.Create(factory, true);
@@ -567,6 +580,7 @@ namespace VioletIoc
         public IContainer RegisterSingleton<TInterface, TType>(Func<IContainer, TType> factory, string key)
             where TType : class, TInterface
         {
+            ThrowIfDisposed();
             var k = new RegistrationKey(typeof(TInterface), key);
 
             _registrations[k] = FactoryRegistration<TType>.Create(factory, true);
@@ -596,6 +610,7 @@ namespace VioletIoc
         public IContainer RegisterSingleton<TInterface, TType>(Func<IContainer, ResolutionContext, TType> factory, string key)
             where TType : class, TInterface
         {
+            ThrowIfDisposed();
             var k = new RegistrationKey(typeof(TInterface), key);
 
             _registrations[k] = FactoryRegistration<TType>.Create(factory, true);
@@ -619,6 +634,7 @@ namespace VioletIoc
         /// <param name="key">Key.</param>
         public IContainer RegisterSingleton(Type asType, string key)
         {
+            ThrowIfDisposed();
             var k = new RegistrationKey(asType, key);
 
             _registrations[k] = new Registration(asType, true);
@@ -644,6 +660,7 @@ namespace VioletIoc
         /// <param name="key">Key.</param>
         public IContainer RegisterSingleton(Type interfaceType, Type asType, string key)
         {
+            ThrowIfDisposed();
             var k = new RegistrationKey(interfaceType, key);
 
             _registrations[k] = new Registration(asType, true);
@@ -669,6 +686,7 @@ namespace VioletIoc
         /// <param name="key">Key.</param>
         public IContainer RegisterSingleton(Type interfaceType, object instance, string key)
         {
+            ThrowIfDisposed();
             var k = new RegistrationKey(interfaceType, key);
 
             _registrations[k] = new Registration(instance);
@@ -676,8 +694,30 @@ namespace VioletIoc
             return this;
         }
 
+        /// <summary>
+        /// Creates a child container.
+        /// </summary>
+        /// <returns>The child container.</returns>
+        public IContainer CreateChildContainer()
+        {
+            return new Container(this, _traceName);
+        }
+
+        /// <summary>
+        /// Releases all resource used by the <see cref="VioletIoc.Container"/> object.
+        /// </summary>
+        /// <remarks>Call <see cref="Dispose()"/> when you are finished using the <see cref="T:VioletIoc.Container"/>. The
+        /// <see cref="Dispose()"/> method leaves the <see cref="T:VioletIoc.Container"/> in an unusable state. After
+        /// calling <see cref="Dispose()"/>, you must release all references to the <see cref="T:VioletIoc.Container"/> so
+        /// the garbage collector can reclaim the memory that the <see cref="T:VioletIoc.Container"/> was occupying.</remarks>
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+
         internal object CreateInstance(Type type, ResolutionTracer tracer, ResolutionContext context, params IParameterOverride[] overrides)
         {
+            ThrowIfDisposed();
             tracer?.Add($"Creating instance of {type}...");
 
             if (context == null)
@@ -752,6 +792,10 @@ namespace VioletIoc
             try
             {
                 instance = Activator.CreateInstance(type, ctorParams);
+                if (instance is IDisposable disposable)
+                {
+                    _disposables.Add(disposable);
+                }
             }
             catch (Exception ex)
             {
@@ -763,6 +807,7 @@ namespace VioletIoc
 
         internal bool TryGet(Type type, string key, out object obj, ResolutionTracer tracer, Container locator, ResolutionContext context, params IParameterOverride[] overrides)
         {
+            ThrowIfDisposed();
             type.ThrowIfNull(nameof(type));
             locator.ThrowIfNull(nameof(locator));
 
@@ -831,41 +876,34 @@ namespace VioletIoc
             return true;
         }
 
-        private struct RegistrationKey
+        /// <summary>
+        /// Dispose
+        /// </summary>
+        /// <param name="disposing">If set to <c>true</c> disposing.</param>
+        protected virtual void Dispose(bool disposing)
         {
-            private readonly Type _type;
-            private readonly string _key;
-
-            public RegistrationKey(Type type, string key)
+            if (!_disposed)
             {
-                _type = type;
-                _key = key;
-            }
-
-            public Type Type => _type;
-
-            public string Key => _key;
-
-            public static implicit operator Type(RegistrationKey k)
-            {
-                return k._type;
-            }
-
-            public static implicit operator RegistrationKey(Type t)
-            {
-                return new RegistrationKey(t, null);
-            }
-
-            public bool TryMakeOpenGeneric(out RegistrationKey genericRegistrationKey)
-            {
-                if (_type.IsGenericType)
+                if (disposing)
                 {
-                    genericRegistrationKey = new RegistrationKey(_type.GetGenericTypeDefinition(), _key);
-                    return true;
+                    foreach (var disposable in _disposables)
+                    {
+                        disposable.Dispose();
+                    }
+
+                    _disposables.Clear();
+                    _registrations.Clear();
                 }
 
-                genericRegistrationKey = null;
-                return false;
+                _disposed = true;
+            }
+        }
+
+        private void ThrowIfDisposed()
+        {
+            if (_disposed)
+            {
+                throw new ContainerException("Attempt to use a container that has been disposed.");
             }
         }
     }

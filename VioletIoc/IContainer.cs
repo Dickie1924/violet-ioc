@@ -9,7 +9,7 @@ namespace VioletIoc
     /// <summary>
     /// Container.
     /// </summary>
-    public interface IContainer
+    public interface IContainer : IDisposable
     {
         /// <summary>
         /// Register this instance.
@@ -389,6 +389,12 @@ namespace VioletIoc
         /// </summary>
         /// <returns>The root container.</returns>
         IContainer GetRootContainer();
+
+        /// <summary>
+        /// Creates a child container.
+        /// </summary>
+        /// <returns>The child container.</returns>
+        IContainer CreateChildContainer();
 
         /// <summary>
         /// Cans the resolve.
