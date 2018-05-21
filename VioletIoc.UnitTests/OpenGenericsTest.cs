@@ -1,14 +1,21 @@
 ﻿using Xunit;
-using VioletIoc;
+using Xunit.Abstractions;
 
 namespace VioletIoc.UnitTests
 {
     public class OpenGenericsTest
     {
+        private readonly ITestOutputHelper _output;
+
+        public OpenGenericsTest(ITestOutputHelper output)
+        {
+            _output = output;
+        }
+
         [Fact]
         public void Works()
         {
-            var container = ContainerFactory.CreateRootContainer();  
+            var container = ContainerFactory.CreateRootContainer("root", _output.WriteLine); 
             container.Register(typeof(ISpeaker<>), typeof(Speaker<>));
 
             var catSpeaker = container.Resolve<ISpeaker<Cat>>();

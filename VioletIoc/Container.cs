@@ -484,6 +484,7 @@ namespace VioletIoc
 
                     if (obj != null)
                     {
+                        tracer?.Add($"Using paramater override value {obj}.");
                         return obj;
                     }
                     else if (TryGet(p.ParameterType, null, out obj, tracer, this, context, new IParameterOverride[] { }))
@@ -500,9 +501,12 @@ namespace VioletIoc
 
             try
             {
+                tracer?.Add($"Creating with arguments [{string.Join(",", ctorParams.Select(p => p?.ToString() ?? "null"))}].");
+
                 instance = Activator.CreateInstance(type, ctorParams);
                 if (instance is IDisposable disposable)
                 {
+                    tracer?.Add($"Instance marked for later disposal.");
                     _disposables.Add(disposable);
                 }
             }
@@ -548,7 +552,7 @@ namespace VioletIoc
                 if (_registrations.ContainsKey(k))
                 {
                     tracer?.Add($"Using local registration...");
-                    obj = _registrations[k].GetObject(tracer, context, locator, overrides);
+                    obj = _registrations[k].GetObject(tracer, context, this, overrides);
                 }
                 else if (k.TryMakeOpenGeneric(out var openGenericKey) && _registrations.ContainsKey(openGenericKey))
                 {
