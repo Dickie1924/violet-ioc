@@ -31,9 +31,6 @@ namespace VioletIoc
             _traceName = traceName;
             _traceEnabled = traceName != null;
 
-            // Resolving an IContainer creates a child of the current container.
-            Register<IContainer>(c => c.CreateChildContainer());
-
             // Resolving a Container get's this (needed by Resolver<T>)
             RegisterSingleton<Container>(this);
 
