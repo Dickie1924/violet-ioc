@@ -32,7 +32,7 @@ namespace VioletIoc
         }
 
         public Container(Container parent, string traceName)
-            : this(parent, traceName, null)
+            : this(parent, traceName, s => Console.WriteLine(s))
         {
         }
 
@@ -581,7 +581,7 @@ namespace VioletIoc
 
                 if (traceHead)
                 {
-                    Console.WriteLine(tracer);
+                    _logger?.Invoke(tracer.ToString());
                 }
 
                 throw;
@@ -589,14 +589,7 @@ namespace VioletIoc
 
             if (traceHead)
             {
-                if (_logger != null)
-                {
-                    _logger?.Invoke(tracer.ToString());
-                }
-                else
-                {
-                    Console.WriteLine(tracer);
-                }
+                _logger?.Invoke(tracer.ToString());
             }
 
             if (obj == null)
