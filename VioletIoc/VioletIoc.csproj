@@ -10,8 +10,8 @@
     <Title>Violet Ioc</Title>
     <Description>A simple inversion of control container</Description>
     <PackageId>VioletIoc</PackageId>
-    <PackageVersion>2.1</PackageVersion>
-    <ReleaseVersion>2.1</ReleaseVersion>
+    <PackageVersion>2.2</PackageVersion>
+    <ReleaseVersion>2.2</ReleaseVersion>
     <SynchReleaseVersion>false</SynchReleaseVersion>
     <LangVersion>7.1</LangVersion>
   </PropertyGroup>

@@ -2,13 +2,19 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace VioletIoc
 {
     internal class Container : IContainer
     {
+        private static ConditionalWeakTable<object, object> _ids = new ConditionalWeakTable<object, object>();
+        private static long currentId;
+
         private readonly string _traceName;
         private readonly bool _traceEnabled;
+        private readonly Action<string> _logger;
         private readonly Container _parent;
         private readonly Dictionary<RegistrationKey, Registration> _registrations = new Dictionary<RegistrationKey, Registration>();
         private readonly HashSet<IDisposable> _disposables = new HashSet<IDisposable>();
@@ -16,20 +22,32 @@ namespace VioletIoc
         private bool _disposed;
 
         public Container()
-            : this(null, null)
+            : this(null, null, null)
         {
         }
 
         public Container(Container parent)
-            : this(parent, null)
+            : this(parent, null, null)
         {
         }
 
         public Container(Container parent, string traceName)
+            : this(parent, traceName, null)
+        {
+        }
+
+        public Container(Container parent, string traceName, Action<string> logger)
         {
             _parent = parent;
-            _traceName = traceName;
-            _traceEnabled = traceName != null;
+            _logger = logger;
+
+            if (traceName != null)
+            {
+                _traceEnabled = true;
+                _traceName = $"{traceName}[{DebugObjectId()}]";
+            }
+
+            _logger?.Invoke($"{_traceName} : Created container.");
 
             // Resolving a Container get's this (needed by Resolver<T>)
             RegisterSingleton<Container>(this);
@@ -382,7 +400,7 @@ namespace VioletIoc
 
         public IContainer CreateChildContainer()
         {
-            return new Container(this, _traceName);
+            return new Container(this, _traceName, _logger);
         }
 
         public IContainer CreateChildContainer(string appendTraceName)
@@ -398,7 +416,7 @@ namespace VioletIoc
                 traceName = _traceName;
             }
 
-            return new Container(this, traceName);
+            return new Container(this, traceName, _logger);
         }
 
         public void Dispose()
@@ -571,7 +589,14 @@ namespace VioletIoc
 
             if (traceHead)
             {
-                Console.WriteLine(tracer);
+                if (_logger != null)
+                {
+                    _logger?.Invoke(tracer.ToString());
+                }
+                else
+                {
+                    Console.WriteLine(tracer);
+                }
             }
 
             if (obj == null)
@@ -588,8 +613,11 @@ namespace VioletIoc
             {
                 if (disposing)
                 {
+                    _logger?.Invoke($"{_traceName} : Disposing {_disposables?.Count ?? 0} objects...");
+
                     foreach (var disposable in _disposables)
                     {
+                        _logger?.Invoke($"{_traceName} : Disposing {disposable}...");
                         disposable.Dispose();
                     }
 
@@ -597,6 +625,7 @@ namespace VioletIoc
                     _registrations.Clear();
                 }
 
+                _logger?.Invoke($"{_traceName} : Disposed.");
                 _disposed = true;
             }
         }
@@ -607,6 +636,14 @@ namespace VioletIoc
             {
                 throw new ContainerException("Attempt to use a container that has been disposed.");
             }
+        }
+
+        private long DebugObjectId()
+        {
+            return (long)_ids.GetValue(this, (key) =>
+            {
+                return Interlocked.Increment(ref currentId);
+            });
         }
     }
 }
