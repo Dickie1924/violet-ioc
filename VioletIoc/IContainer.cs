@@ -15,6 +15,23 @@ namespace VioletIoc
         /// Register this instance.
         /// </summary>
         /// <returns>The register.</returns>
+        /// <typeparam name="TType">The 1st type parameter.</typeparam>
+        IContainer Register<TType>()
+            where TType : class;
+
+        /// <summary>
+        /// Register the specified key.
+        /// </summary>
+        /// <returns>The register.</returns>
+        /// <param name="key">Key.</param>
+        /// <typeparam name="TType">The 1st type parameter.</typeparam>
+        IContainer Register<TType>(string key)
+            where TType : class;
+
+        /// <summary>
+        /// Register this instance.
+        /// </summary>
+        /// <returns>The register.</returns>
         /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
         /// <typeparam name="TType">The 2nd type parameter.</typeparam>
         IContainer Register<TInterface, TType>()

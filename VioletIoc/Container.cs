@@ -164,6 +164,14 @@ namespace VioletIoc
             return _registrations.ContainsKey(k);
         }
 
+        public IContainer Register<TType>()
+            where TType : class
+            => Register<TType, TType>((string)null);
+
+        public IContainer Register<TType>(string key)
+            where TType : class
+            => Register<TType, TType>(key);
+
         public IContainer Register<TInterface, TType>()
             where TInterface : class
             where TType : class, TInterface
