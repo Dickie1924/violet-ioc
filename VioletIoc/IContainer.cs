@@ -405,6 +405,13 @@ namespace VioletIoc
         IContainer CreateChildContainer();
 
         /// <summary>
+        /// Creates a child container.
+        /// </summary>
+        /// <returns>The child container.</returns>
+        /// <param name="appendTraceName">Append trace name.</param>
+        IContainer CreateChildContainer(string appendTraceName);
+
+        /// <summary>
         /// Cans the resolve.
         /// </summary>
         /// <returns><c>true</c>, if resolve was caned, <c>false</c> otherwise.</returns>

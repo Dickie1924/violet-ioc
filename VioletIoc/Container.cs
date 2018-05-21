@@ -380,6 +380,22 @@ namespace VioletIoc
             return new Container(this, _traceName);
         }
 
+        public IContainer CreateChildContainer(string appendTraceName)
+        {
+            string traceName = default;
+
+            if (appendTraceName != null)
+            {
+                traceName = $"{_traceName ?? string.Empty}{appendTraceName}";
+            }
+            else
+            {
+                traceName = _traceName;
+            }
+
+            return new Container(this, traceName);
+        }
+
         public void Dispose()
         {
             Dispose(true);

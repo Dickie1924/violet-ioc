@@ -13,6 +13,7 @@
     <PackageVersion>2.0</PackageVersion>
     <ReleaseVersion>2.0</ReleaseVersion>
     <SynchReleaseVersion>false</SynchReleaseVersion>
+    <LangVersion>7.1</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup>
