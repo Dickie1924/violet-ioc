@@ -498,12 +498,7 @@ namespace VioletIoc
 
         internal bool TryGet(Type type, string key, out object obj, ResolutionTracer tracer, Container locator, ResolutionContext context, params IParameterOverride[] overrides)
         {
-            ThrowIfDisposed();
-            type.ThrowIfNull(nameof(type));
-            locator.ThrowIfNull(nameof(locator));
-
             bool traceHead = false;
-            obj = null;
 
             if (tracer == null && _traceEnabled)
             {
@@ -512,46 +507,66 @@ namespace VioletIoc
                 tracer?.Add($"Resolving type {type}...");
             }
 
-            if (context == null)
+            try
             {
-                // first level in resolution
-                context = new ResolutionContext(type);
-            }
-            else
-            {
-                context = new ResolutionContext(type, context);
-            }
+                ThrowIfDisposed();
+                type.ThrowIfNull(nameof(type));
+                locator.ThrowIfNull(nameof(locator));
 
-            var k = new RegistrationKey(type, key);
-
-            if (_registrations.ContainsKey(k))
-            {
-                tracer?.Add($"Using local registration...");
-                obj = _registrations[k].GetObject(tracer, context, locator, overrides);
-            }
-            else if (k.TryMakeOpenGeneric(out var openGenericKey) && _registrations.ContainsKey(openGenericKey))
-            {
-                var openReg = _registrations[openGenericKey];
-                var closedReg = openReg.MakeClosedGeneric(k.Type.GenericTypeArguments);
-
-                _registrations.Add(k, closedReg);
-
-                obj = _registrations[k].GetObject(tracer, context, locator, overrides);
-            }
-            else if (_parent != null && _parent.TryGet(type, key, out object parentObj, tracer?.CreateChild(_parent.TraceName), locator, context, overrides))
-            {
-                tracer?.Add($"Parent resolved.");
-                obj = parentObj;
-            }
-            else if (locator == this)
-            {
-                tracer?.Add($"Creating...");
-                obj = CreateInstance(type, tracer, context, overrides);
-            }
-            else
-            {
-                tracer?.Add($"Unable to resolve...");
                 obj = null;
+
+                if (context == null)
+                {
+                    // first level in resolution
+                    context = new ResolutionContext(type);
+                }
+                else
+                {
+                    context = new ResolutionContext(type, context);
+                }
+
+                var k = new RegistrationKey(type, key);
+
+                if (_registrations.ContainsKey(k))
+                {
+                    tracer?.Add($"Using local registration...");
+                    obj = _registrations[k].GetObject(tracer, context, locator, overrides);
+                }
+                else if (k.TryMakeOpenGeneric(out var openGenericKey) && _registrations.ContainsKey(openGenericKey))
+                {
+                    var openReg = _registrations[openGenericKey];
+                    var closedReg = openReg.MakeClosedGeneric(k.Type.GenericTypeArguments);
+
+                    _registrations.Add(k, closedReg);
+
+                    obj = _registrations[k].GetObject(tracer, context, locator, overrides);
+                }
+                else if (_parent != null && _parent.TryGet(type, key, out object parentObj, tracer?.CreateChild(_parent.TraceName), locator, context, overrides))
+                {
+                    tracer?.Add($"Parent resolved.");
+                    obj = parentObj;
+                }
+                else if (locator == this)
+                {
+                    tracer?.Add($"Creating...");
+                    obj = CreateInstance(type, tracer, context, overrides);
+                }
+                else
+                {
+                    tracer?.Add($"Unable to resolve...");
+                    obj = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                tracer?.Add($"Exception... {ex.Message}.");
+
+                if (traceHead)
+                {
+                    Console.WriteLine(tracer);
+                }
+
+                throw;
             }
 
             if (traceHead)
