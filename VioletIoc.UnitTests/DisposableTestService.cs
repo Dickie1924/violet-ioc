@@ -2,7 +2,7 @@
 
 namespace VioletIoc.UnitTests
 {
-    class DisposableTestService : ITestService, IDisposable
+    class DisposableTestService : TestService, IDisposable
     {
         public bool Disposed { get; private set; }
 

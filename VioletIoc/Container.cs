@@ -454,6 +454,21 @@ namespace VioletIoc
                 return d.CreateDelegate();
             }
 
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Lazy<>))
+            {
+                tracer?.Add("Creating lazy...");
+
+                var returnType = type.GenericTypeArguments[0];
+
+                var d = new LazyDelegate(returnType, this);
+
+                var lazyConstructor = type
+                    .GetConstructors()
+                    .Single(ci => ci.GetParameters().Count() == 1 && ci.GetParameters()[0].ParameterType.IsSubclassOf(typeof(Delegate)));
+
+                return lazyConstructor.Invoke(new object[] { d.CreateDelegate() });
+            }
+
             ConstructorInfo ctor = null;
             var ctors = type.GetTypeInfo().GetConstructors();
             if (ctors.Count() > 1)

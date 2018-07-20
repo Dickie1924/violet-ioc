@@ -2,5 +2,6 @@
 {
     class TestService : ITestService
     {
+        public string Bark() => "Woof!";
     }
 }

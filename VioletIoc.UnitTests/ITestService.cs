@@ -2,6 +2,6 @@
 {
     interface ITestService
     {
-        
+        string Bark();
     }
 }
