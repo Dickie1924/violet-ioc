@@ -50,35 +50,28 @@ namespace VioletIoc
             _logger?.Invoke($"{_traceName} : Created container.");
 
             // Resolving a Container get's this (needed by Resolver<T>)
-            Register(typeof(Container), this, null);
-            Register(typeof(IResolver<>), typeof(Resolver<>), null, false);
+            RegisterSingleton(typeof(Container), this);
+            Register(typeof(IResolver<>), typeof(Resolver<>), false);
         }
 
         public string TraceName => _traceName;
 
         public object Resolve(Type type, params IParameterOverride[] overrides)
-            => Resolve(type, null, overrides);
-
-        public object Resolve(Type type, string key, params IParameterOverride[] overrides)
         {
             object obj;
-            if (TryResolve(type, key, out obj, overrides))
+            if (TryResolve(type, out obj, overrides))
             {
                 return obj;
             }
             else
             {
-                throw new Exception($"Can not resolve type {type} with key {key ?? "NULL"}.");
+                throw new Exception($"Can not resolve type {type}.");
             }
         }
 
         public T Resolve<T>(params IParameterOverride[] overrides)
             where T : class
             => Resolve(typeof(T), overrides) as T;
-
-        public T Resolve<T>(string key, params IParameterOverride[] overrides)
-            where T : class
-            => Resolve(typeof(T), key, overrides) as T;
 
         public IResolver<T> ResolverFor<T>()
             where T : class
@@ -88,13 +81,9 @@ namespace VioletIoc
 
         public T ResolveOrDefault<T>(params IParameterOverride[] overrides)
             where T : class
-            => ResolveOrDefault<T>(null, overrides);
-
-        public T ResolveOrDefault<T>(string key, params IParameterOverride[] overrides)
-            where T : class
         {
             object obj;
-            if (TryResolve(typeof(T), key, out obj, overrides))
+            if (TryResolve(typeof(T), out obj, overrides))
             {
                 return obj as T;
             }
@@ -106,12 +95,8 @@ namespace VioletIoc
 
         public bool TryResolve<T>(out T obj, params IParameterOverride[] overrides)
             where T : class
-        => TryResolve<T>(null, out obj, overrides);
-
-        public bool TryResolve<T>(string key, out T obj, params IParameterOverride[] overrides)
-            where T : class
         {
-            if (TryResolve(typeof(T), key, out object o, null, this, null, overrides))
+            if (TryResolve(typeof(T), out object o, null, this, null, overrides))
             {
                 obj = (T)o;
                 return true;
@@ -124,10 +109,7 @@ namespace VioletIoc
         }
 
         public bool TryResolve(Type type, out object obj, params IParameterOverride[] overrides)
-            => TryResolve(type, null, out obj, null, this, null, overrides);
-
-        public bool TryResolve(Type type, string key, out object obj, params IParameterOverride[] overrides)
-            => TryResolve(type, key, out obj, null, this, null, overrides);
+            => TryResolve(type, out obj, null, this, null, overrides);
 
         public IContainer GetParentContainer() => _parent;
 
@@ -143,78 +125,158 @@ namespace VioletIoc
         }
 
         public bool CanResolve<T>()
-            => CanResolve(typeof(T), null);
-
-        public bool CanResolve<T>(string key)
-            => CanResolve(typeof(T), key);
+            => CanResolve(typeof(T));
 
         public bool CanResolve(Type type)
-            => CanResolve(type, null);
-
-        public bool CanResolve(Type type, string key)
         {
             type.ThrowIfNull(nameof(type));
 
-            return CanResolveLocally(type, key)
-                || (_parent != null && _parent.CanResolve(type, key));
+            return CanResolveLocally(type)
+                || (_parent != null && _parent.CanResolve(type));
         }
 
         public bool CanResolveLocally(Type type)
-            => CanResolveLocally(type, null);
-
-        public bool CanResolveLocally(Type type, string key)
         {
             type.ThrowIfNull(nameof(type));
             ThrowIfDisposed();
 
-            var k = new RegistrationKey(type, key);
+            var k = new RegistrationKey(type);
 
             return _registrations.ContainsKey(k);
         }
 
-        public IContainer Register(Type interfaceType, object instance, string key)
+        public IContainer RegisterSingleton(Type interfaceType, object instance)
         {
             ThrowIfDisposed();
 
             _logger?.Invoke($"{_traceName} : Created container.");
 
-            var k = new RegistrationKey(interfaceType, key);
+            var k = new RegistrationKey(interfaceType);
             _registrations[k] = new Registration(instance);
 
             return this;
         }
 
-        public IContainer Register(Type interfaceType, Type asType, string key, bool singleton)
+        public IContainer Register(Type interfaceType, Type asType, bool singleton)
         {
             ThrowIfDisposed();
 
-            var k = new RegistrationKey(interfaceType, key);
+            var k = new RegistrationKey(interfaceType);
             _registrations[k] = new Registration(asType, singleton);
 
             return this;
         }
 
-        public IContainer Register<TType>(Type interfaceType, Func<IContainer, TType> factory, string key, bool singleton)
+        public IContainer Register<TType>(Type interfaceType, Func<IContainer, TType> factory, bool singleton)
             where TType : class
         {
             ThrowIfDisposed();
 
-            var k = new RegistrationKey(interfaceType, key);
-            _registrations[k] = FactoryRegistration<TType>.Create(factory, false);
+            var k = new RegistrationKey(interfaceType);
+            _registrations[k] = FactoryRegistration<TType>.Create(factory, singleton);
 
             return this;
         }
 
-        public IContainer Register<TType>(Type interfaceType, Func<IContainer, ResolutionContext, TType> factory, string key, bool singleton)
+        public IContainer Register<TType>(Type interfaceType, Func<IContainer, ResolutionContext, TType> factory, bool singleton)
             where TType : class
         {
             ThrowIfDisposed();
 
-            var k = new RegistrationKey(interfaceType, key);
-            _registrations[k] = FactoryRegistration<TType>.Create(factory, false);
+            var k = new RegistrationKey(interfaceType);
+            _registrations[k] = FactoryRegistration<TType>.Create(factory, singleton);
 
             return this;
         }
+
+        public IContainer Register<TType>()
+            where TType : class
+            => Register(typeof(TType), typeof(TType), false);
+
+        public IContainer Register<TInterface, TType>()
+            where TInterface : class
+            where TType : class, TInterface
+            => Register(typeof(TInterface), typeof(TType), false);
+
+        public IContainer Register<TInterface>(Func<IContainer, TInterface> factory)
+            where TInterface : class
+            => Register<TInterface>(typeof(TInterface), factory, false);
+
+        public IContainer Register<TInterface>(Func<IContainer, ResolutionContext, TInterface> factory)
+            where TInterface : class
+            => Register<TInterface>(typeof(TInterface), factory, false);
+
+        public IContainer Register<TInterface>(Func<IContainer, object> factory)
+            where TInterface : class
+            => Register<object>(typeof(TInterface), factory, false);
+
+        public IContainer Register<TInterface>(Func<IContainer, ResolutionContext, object> factory)
+            where TInterface : class
+            => Register<object>(typeof(TInterface), factory, false);
+
+        public IContainer Register<TInterface, TType>(Func<IContainer, TType> factory)
+            where TType : class, TInterface
+            => Register<TType>(typeof(TInterface), factory, false);
+
+        public IContainer Register<TInterface, TType>(Func<IContainer, ResolutionContext, TType> factory)
+            where TType : class, TInterface
+            => Register<TType>(typeof(TInterface), factory, false);
+
+        public IContainer Register(Type asType)
+            => Register(asType, asType, false);
+
+        public IContainer Register(Type interfaceType, Type asType)
+            => Register(interfaceType, asType, false);
+
+        public IContainer RegisterSingleton<TType>(TType instance)
+            where TType : class
+            => RegisterSingleton(typeof(TType), instance);
+
+        public IContainer RegisterSingleton<TType>()
+            where TType : class
+            => Register(typeof(TType), typeof(TType), true);
+
+        public IContainer RegisterSingleton<TInterface, TType>()
+            where TType : class, TInterface
+            => Register(typeof(TInterface), typeof(TType), true);
+
+        public IContainer RegisterSingleton<TInterface, TType>(TType instance)
+            where TType : class, TInterface
+            => RegisterSingleton(typeof(TInterface), instance);
+
+        public IContainer RegisterSingleton<TType>(Func<IContainer, TType> factory)
+            where TType : class
+            => Register<TType>(typeof(TType), factory, true);
+
+        public IContainer RegisterSingleton<TType>(Func<IContainer, ResolutionContext, TType> factory)
+            where TType : class
+            => Register<TType>(typeof(TType), factory, true);
+
+        public IContainer RegisterSingleton<TInterface, TType>(Func<IContainer, TType> factory)
+            where TType : class, TInterface
+            => Register<TType>(typeof(TInterface), factory, true);
+
+        public IContainer RegisterSingleton<TInterface, TType>(Func<IContainer, ResolutionContext, TType> factory)
+            where TType : class, TInterface
+            => Register<TType>(typeof(TInterface), factory, true);
+
+        public IContainer RegisterSingleton(Type asType)
+            => Register(asType, asType, true);
+
+        public IContainer RegisterSingleton(Type interfaceType, Type asType)
+            => Register(interfaceType, asType, true);
+
+        public IContainer RegisterSingleton(Type interfaceType, Func<IContainer, object> factory)
+            => Register<object>(interfaceType, factory, true);
+
+        public IContainer RegisterSingleton(Type interfaceType, Func<IContainer, ResolutionContext, object> factory)
+            => Register<object>(interfaceType, factory, true);
+
+        public IContainer RegisterSingleton<TInterface>(Func<IContainer, object> factory)
+            => Register<object>(typeof(TInterface), factory, true);
+
+        public IContainer RegisterSingleton<TInterface>(Func<IContainer, ResolutionContext, object> factory)
+            => Register<object>(typeof(TInterface), factory, true);
 
         public IContainer CreateChildContainer()
         {
@@ -368,7 +430,7 @@ namespace VioletIoc
                         tracer?.Add($"Using paramater override value {obj}.");
                         return obj;
                     }
-                    else if (TryResolve(p.ParameterType, null, out obj, tracer, this, context, new IParameterOverride[] { }))
+                    else if (TryResolve(p.ParameterType, out obj, tracer, this, context, new IParameterOverride[] { }))
                     {
                         return obj;
                     }
@@ -379,7 +441,7 @@ namespace VioletIoc
                 }).ToArray();
         }
 
-        internal bool TryResolve(Type type, string key, out object obj, ResolutionTracer tracer, Container container, ResolutionContext context, params IParameterOverride[] overrides)
+        internal bool TryResolve(Type type, out object obj, ResolutionTracer tracer, Container container, ResolutionContext context, params IParameterOverride[] overrides)
         {
             bool traceHead = false;
 
@@ -408,7 +470,7 @@ namespace VioletIoc
                     context = new ResolutionContext(type, context);
                 }
 
-                var k = new RegistrationKey(type, key);
+                var k = new RegistrationKey(type);
 
                 if (_registrations.ContainsKey(k))
                 {
@@ -424,7 +486,7 @@ namespace VioletIoc
 
                     obj = _registrations[k].GetObject(tracer, context, container, overrides);
                 }
-                else if (_parent != null && _parent.TryResolve(type, key, out object parentObj, tracer?.CreateChild(_parent.TraceName), container, context, overrides))
+                else if (_parent != null && _parent.TryResolve(type, out object parentObj, tracer?.CreateChild(_parent.TraceName), container, context, overrides))
                 {
                     tracer?.Add($"Parent resolved.");
                     obj = parentObj;
