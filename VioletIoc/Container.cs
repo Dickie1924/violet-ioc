@@ -50,20 +50,26 @@ namespace VioletIoc
             _logger?.Invoke($"{_traceName} : Created container.");
 
             // Resolving a Container get's this (needed by Resolver<T>)
-            RegisterSingleton<Container>(this);
-
-            Register(typeof(IResolver<>), typeof(Resolver<>));
+            Register(typeof(Container), this, null);
+            Register(typeof(IResolver<>), typeof(Resolver<>), null, false);
         }
 
         public string TraceName => _traceName;
 
-        public object CreateInstance(Type type, params IParameterOverride[] overrides)
-            => CreateInstance(type, null, null, overrides);
+        public object Resolve(Type type, params IParameterOverride[] overrides)
+            => Resolve(type, null, overrides);
 
-        public T CreateInstance<T>(params IParameterOverride[] overrides)
-            where T : class
+        public object Resolve(Type type, string key, params IParameterOverride[] overrides)
         {
-            return CreateInstance(typeof(T), overrides) as T;
+            object obj;
+            if (TryResolve(type, key, out obj, overrides))
+            {
+                return obj;
+            }
+            else
+            {
+                throw new Exception($"Can not resolve type {type} with key {key ?? "NULL"}.");
+            }
         }
 
         public T Resolve<T>(params IParameterOverride[] overrides)
@@ -105,7 +111,7 @@ namespace VioletIoc
         public bool TryResolve<T>(string key, out T obj, params IParameterOverride[] overrides)
             where T : class
         {
-            if (TryGet(typeof(T), key, out object o, null, this, null, overrides))
+            if (TryResolve(typeof(T), key, out object o, null, this, null, overrides))
             {
                 obj = (T)o;
                 return true;
@@ -118,26 +124,10 @@ namespace VioletIoc
         }
 
         public bool TryResolve(Type type, out object obj, params IParameterOverride[] overrides)
-            => TryGet(type, null, out obj, null, this, null, overrides);
+            => TryResolve(type, null, out obj, null, this, null, overrides);
 
         public bool TryResolve(Type type, string key, out object obj, params IParameterOverride[] overrides)
-            => TryGet(type, key, out obj, null, this, null, overrides);
-
-        public object Resolve(Type type, params IParameterOverride[] overrides)
-            => Resolve(type, null, overrides);
-
-        public object Resolve(Type type, string key, params IParameterOverride[] overrides)
-        {
-            object obj;
-            if (TryResolve(type, key, out obj, overrides))
-            {
-                return obj;
-            }
-            else
-            {
-                throw new Exception($"Can not resolve type {type} with key {key ?? "NULL"}.");
-            }
-        }
+            => TryResolve(type, key, out obj, null, this, null, overrides);
 
         public IContainer GetParentContainer() => _parent;
 
@@ -182,218 +172,46 @@ namespace VioletIoc
             return _registrations.ContainsKey(k);
         }
 
-        public IContainer Register<TType>()
-            where TType : class
-            => Register<TType, TType>((string)null);
-
-        public IContainer Register<TType>(string key)
-            where TType : class
-            => Register<TType, TType>(key);
-
-        public IContainer Register<TInterface, TType>()
-            where TInterface : class
-            where TType : class, TInterface
-            => Register<TInterface, TType>((string)null);
-
-        public IContainer Register<TInterface, TType>(string key)
-            where TInterface : class
-            where TType : class, TInterface
+        public IContainer Register(Type interfaceType, object instance, string key)
         {
             ThrowIfDisposed();
-            var k = new RegistrationKey(typeof(TInterface), key);
 
-            _registrations[k] = new Registration(typeof(TType), false);
+            _logger?.Invoke($"{_traceName} : Created container.");
 
-            return this;
-        }
-
-        public IContainer Register<TInterface>(Func<IContainer, TInterface> factory)
-            where TInterface : class
-            => Register<TInterface>(factory, (string)null);
-
-        public IContainer Register<TInterface>(Func<IContainer, TInterface> factory, string key)
-            where TInterface : class
-        {
-            ThrowIfDisposed();
-            var k = new RegistrationKey(typeof(TInterface), key);
-
-            _registrations[k] = FactoryRegistration<TInterface>.Create(factory, false);
-
-            return this;
-        }
-
-        public IContainer Register<TInterface>(Func<IContainer, ResolutionContext, TInterface> factory)
-            where TInterface : class
-            => Register<TInterface>(factory, (string)null);
-
-        public IContainer Register<TInterface>(Func<IContainer, ResolutionContext, TInterface> factory, string key)
-            where TInterface : class
-        {
-            ThrowIfDisposed();
-            var k = new RegistrationKey(typeof(TInterface), key);
-
-            _registrations[k] = FactoryRegistration<TInterface>.Create(factory, false);
-
-            return this;
-        }
-
-        public IContainer Register(Type interfaceType, Type asType)
-            => Register(interfaceType, asType, (string)null);
-
-        public IContainer Register(Type interfaceType, Type asType, string key)
-        {
-            ThrowIfDisposed();
             var k = new RegistrationKey(interfaceType, key);
-
-            _registrations[k] = new Registration(asType, false);
-
-            return this;
-        }
-
-        public IContainer RegisterSingleton<TType>(TType instance)
-            where TType : class
-            => RegisterSingleton<TType>(instance, (string)null);
-
-        public IContainer RegisterSingleton<TType>(TType instance, string key)
-            where TType : class
-        {
-            ThrowIfDisposed();
-            var k = new RegistrationKey(typeof(TType), key);
-
             _registrations[k] = new Registration(instance);
 
             return this;
         }
 
-        public IContainer RegisterSingleton<TType>()
-            where TType : class
-            => RegisterSingleton<TType, TType>((string)null);
-
-        public IContainer RegisterSingleton<TInterface, TType>()
-            where TType : class, TInterface
-        => RegisterSingleton<TInterface, TType>((string)null);
-
-        public IContainer RegisterSingleton<TInterface, TType>(string key)
-            where TType : class, TInterface
+        public IContainer Register(Type interfaceType, Type asType, string key, bool singleton)
         {
             ThrowIfDisposed();
-            var k = new RegistrationKey(typeof(TInterface), key);
 
-            _registrations[k] = new Registration(typeof(TType), true);
-
-            return this;
-        }
-
-        public IContainer RegisterSingleton<TInterface, TType>(TType instance)
-            where TType : class, TInterface
-            => RegisterSingleton<TInterface, TType>(instance, (string)null);
-
-        public IContainer RegisterSingleton<TInterface, TType>(TType instance, string key)
-            where TType : class, TInterface
-        {
-            ThrowIfDisposed();
-            var k = new RegistrationKey(typeof(TInterface), key);
-
-            _registrations[k] = new Registration(instance);
-
-            return this;
-        }
-
-        public IContainer RegisterSingleton<TType>(Func<IContainer, TType> factory)
-            where TType : class
-            => RegisterSingleton<TType>(factory, (string)null);
-
-        public IContainer RegisterSingleton<TType>(Func<IContainer, TType> factory, string key)
-            where TType : class
-        {
-            ThrowIfDisposed();
-            var k = new RegistrationKey(typeof(TType), key);
-
-            _registrations[k] = FactoryRegistration<TType>.Create(factory, true);
-
-            return this;
-        }
-
-        public IContainer RegisterSingleton<TType>(Func<IContainer, ResolutionContext, TType> factory)
-            where TType : class
-            => RegisterSingleton<TType>(factory, (string)null);
-
-        public IContainer RegisterSingleton<TType>(Func<IContainer, ResolutionContext, TType> factory, string key)
-            where TType : class
-        {
-            ThrowIfDisposed();
-            var k = new RegistrationKey(typeof(TType), key);
-
-            _registrations[k] = FactoryRegistration<TType>.Create(factory, true);
-
-            return this;
-        }
-
-        public IContainer RegisterSingleton<TInterface, TType>(Func<IContainer, TType> factory)
-            where TType : class, TInterface
-            => RegisterSingleton<TInterface, TType>(factory, (string)null);
-
-        public IContainer RegisterSingleton<TInterface, TType>(Func<IContainer, TType> factory, string key)
-            where TType : class, TInterface
-        {
-            ThrowIfDisposed();
-            var k = new RegistrationKey(typeof(TInterface), key);
-
-            _registrations[k] = FactoryRegistration<TType>.Create(factory, true);
-
-            return this;
-        }
-
-        public IContainer RegisterSingleton<TInterface, TType>(Func<IContainer, ResolutionContext, TType> factory)
-            where TType : class, TInterface
-            => RegisterSingleton<TInterface, TType>(factory, (string)null);
-
-        public IContainer RegisterSingleton<TInterface, TType>(Func<IContainer, ResolutionContext, TType> factory, string key)
-            where TType : class, TInterface
-        {
-            ThrowIfDisposed();
-            var k = new RegistrationKey(typeof(TInterface), key);
-
-            _registrations[k] = FactoryRegistration<TType>.Create(factory, true);
-
-            return this;
-        }
-
-        public IContainer RegisterSingleton(Type asType)
-            => RegisterSingleton(asType, (string)null);
-
-        public IContainer RegisterSingleton(Type asType, string key)
-        {
-            ThrowIfDisposed();
-            var k = new RegistrationKey(asType, key);
-
-            _registrations[k] = new Registration(asType, true);
-
-            return this;
-        }
-
-        public IContainer RegisterSingleton(Type interfaceType, Type asType)
-            => RegisterSingleton(interfaceType, asType, (string)null);
-
-        public IContainer RegisterSingleton(Type interfaceType, Type asType, string key)
-        {
-            ThrowIfDisposed();
             var k = new RegistrationKey(interfaceType, key);
-
-            _registrations[k] = new Registration(asType, true);
+            _registrations[k] = new Registration(asType, singleton);
 
             return this;
         }
 
-        public IContainer RegisterSingleton(Type interfaceType, object instance)
-            => RegisterSingleton(interfaceType, instance, (string)null);
-
-        public IContainer RegisterSingleton(Type interfaceType, object instance, string key)
+        public IContainer Register<TType>(Type interfaceType, Func<IContainer, TType> factory, string key, bool singleton)
+            where TType : class
         {
             ThrowIfDisposed();
-            var k = new RegistrationKey(interfaceType, key);
 
-            _registrations[k] = new Registration(instance);
+            var k = new RegistrationKey(interfaceType, key);
+            _registrations[k] = FactoryRegistration<TType>.Create(factory, false);
+
+            return this;
+        }
+
+        public IContainer Register<TType>(Type interfaceType, Func<IContainer, ResolutionContext, TType> factory, string key, bool singleton)
+            where TType : class
+        {
+            ThrowIfDisposed();
+
+            var k = new RegistrationKey(interfaceType, key);
+            _registrations[k] = FactoryRegistration<TType>.Create(factory, false);
 
             return this;
         }
@@ -438,79 +256,22 @@ namespace VioletIoc
 
             if (type.GetTypeInfo().IsSubclassOf(typeof(Delegate)))
             {
-                tracer?.Add("Creating factory...");
-
-                var invoker = type.GetRuntimeMethods()
-                                  .Single(m => m.Name == "Invoke");
-
-                var returnType = invoker.ReturnParameter.ParameterType;
-
-                var inputTypes = invoker.GetParameters()
-                                        .Select(p => p.ParameterType)
-                                        .ToArray();
-
-                // construct delegate
-                var d = new FactoryDelegate(returnType, inputTypes, this);
-                return d.CreateDelegate();
+                return CreateFactory(type, tracer);
             }
 
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Lazy<>))
             {
-                tracer?.Add("Creating lazy...");
-
-                var returnType = type.GenericTypeArguments[0];
-
-                var d = new LazyDelegate(returnType, this);
-
-                var lazyConstructor = type
-                    .GetConstructors()
-                    .Single(ci => ci.GetParameters().Count() == 1 && ci.GetParameters()[0].ParameterType.IsSubclassOf(typeof(Delegate)));
-
-                return lazyConstructor.Invoke(new object[] { d.CreateDelegate() });
+                return CreateLazy(type, tracer);
             }
 
-            ConstructorInfo ctor = null;
-            var ctors = type.GetTypeInfo().GetConstructors();
-            if (ctors.Count() > 1)
-            {
-                ctor = ctors.FirstOrDefault(ci => ci.GetCustomAttribute<IocConstructorAttribute>() != null);
-                if (ctor == null)
-                {
-                    ctor = ctors.OrderBy(ci => ci.GetParameters().Count())
-                                .First();
-                }
-            }
-            else
-            {
-                ctor = ctors.SingleOrDefault();
-            }
+            var ctor = GetConstructor(type, tracer);
 
             if (ctor == null)
             {
-                tracer?.Add($"No suitable constructor found for {type}");
                 return null;
             }
 
-            var ctorParams = ctor.GetParameters()
-                .Select(p =>
-                {
-                    tracer?.Add($"Resolving {type} constructor parameter of type {p.ParameterType}");
-                    object obj = overrides.FirstOrDefault(o => o.CanOverride(p))?.ValueForParameter(p, this);
-
-                    if (obj != null)
-                    {
-                        tracer?.Add($"Using paramater override value {obj}.");
-                        return obj;
-                    }
-                    else if (TryGet(p.ParameterType, null, out obj, tracer, this, context, new IParameterOverride[] { }))
-                    {
-                        return obj;
-                    }
-                    else
-                    {
-                        return null;
-                    }
-                }).ToArray();
+            var ctorParams = GetConstructorParams(ctor, tracer, context, overrides);
 
             object instance = null;
 
@@ -533,7 +294,92 @@ namespace VioletIoc
             return instance;
         }
 
-        internal bool TryGet(Type type, string key, out object obj, ResolutionTracer tracer, Container locator, ResolutionContext context, params IParameterOverride[] overrides)
+        internal object CreateFactory(Type type, ResolutionTracer tracer)
+        {
+            tracer?.Add("Creating factory...");
+
+            var invoker = type.GetRuntimeMethods()
+                              .Single(m => m.Name == "Invoke");
+
+            var returnType = invoker.ReturnParameter.ParameterType;
+
+            var inputTypes = invoker.GetParameters()
+                                    .Select(p => p.ParameterType)
+                                    .ToArray();
+
+            // construct delegate
+            var d = new FactoryDelegate(returnType, inputTypes, this);
+            return d.CreateDelegate();
+        }
+
+        internal object CreateLazy(Type type, ResolutionTracer tracer)
+        {
+            tracer?.Add("Creating lazy...");
+
+            var returnType = type.GenericTypeArguments[0];
+
+            var d = new LazyDelegate(returnType, this);
+
+            var lazyConstructor = type
+                .GetConstructors()
+                .Single(ci => ci.GetParameters().Count() == 1 && ci.GetParameters()[0].ParameterType.IsSubclassOf(typeof(Delegate)));
+
+            return lazyConstructor.Invoke(new object[] { d.CreateDelegate() });
+        }
+
+        internal ConstructorInfo GetConstructor(Type type, ResolutionTracer tracer)
+        {
+            ConstructorInfo ctor = null;
+
+            var ctors = type.GetTypeInfo().GetConstructors();
+            if (ctors.Count() > 1)
+            {
+                ctor = ctors.FirstOrDefault(ci => ci.GetCustomAttribute<IocConstructorAttribute>() != null);
+                if (ctor == null)
+                {
+                    ctor = ctors.OrderBy(ci => ci.GetParameters().Count())
+                                .First();
+                }
+            }
+            else
+            {
+                ctor = ctors.SingleOrDefault();
+            }
+
+            if (ctor == null)
+            {
+                tracer?.Add($"No suitable constructor found for {type}");
+                return null;
+            }
+
+            return ctor;
+        }
+
+        internal object[] GetConstructorParams(ConstructorInfo ctor, ResolutionTracer tracer, ResolutionContext context, params IParameterOverride[] overrides)
+        {
+            return ctor.GetParameters()
+                .Select(p =>
+                {
+                    tracer?.Add($"Resolving {ctor.DeclaringType} constructor parameter of type {p.ParameterType}");
+                    object obj = overrides.FirstOrDefault(o => o.CanOverride(p))?.ValueForParameter(p, this);
+
+                    if (obj != null)
+                    {
+                        tracer?.Add($"Using paramater override value {obj}.");
+                        return obj;
+                    }
+                    else if (TryResolve(p.ParameterType, null, out obj, tracer, this, context, new IParameterOverride[] { }))
+                    {
+                        return obj;
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }).ToArray();
+        }
+
+        internal bool TryResolve(Type type, string key, out object obj, ResolutionTracer tracer, Container container, ResolutionContext context, params IParameterOverride[] overrides)
         {
             bool traceHead = false;
 
@@ -548,7 +394,7 @@ namespace VioletIoc
             {
                 ThrowIfDisposed();
                 type.ThrowIfNull(nameof(type));
-                locator.ThrowIfNull(nameof(locator));
+                container.ThrowIfNull(nameof(container));
 
                 obj = null;
 
@@ -576,14 +422,14 @@ namespace VioletIoc
 
                     _registrations.Add(k, closedReg);
 
-                    obj = _registrations[k].GetObject(tracer, context, locator, overrides);
+                    obj = _registrations[k].GetObject(tracer, context, container, overrides);
                 }
-                else if (_parent != null && _parent.TryGet(type, key, out object parentObj, tracer?.CreateChild(_parent.TraceName), locator, context, overrides))
+                else if (_parent != null && _parent.TryResolve(type, key, out object parentObj, tracer?.CreateChild(_parent.TraceName), container, context, overrides))
                 {
                     tracer?.Add($"Parent resolved.");
                     obj = parentObj;
                 }
-                else if (locator == this)
+                else if (container == this)
                 {
                     tracer?.Add($"Creating...");
                     obj = CreateInstance(type, tracer, context, overrides);

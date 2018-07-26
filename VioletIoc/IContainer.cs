@@ -12,293 +12,47 @@ namespace VioletIoc
     public interface IContainer : IDisposable
     {
         /// <summary>
-        /// Register this instance.
-        /// </summary>
-        /// <returns>The register.</returns>
-        /// <typeparam name="TType">The 1st type parameter.</typeparam>
-        IContainer Register<TType>()
-            where TType : class;
-
-        /// <summary>
-        /// Register the specified key.
-        /// </summary>
-        /// <returns>The register.</returns>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TType">The 1st type parameter.</typeparam>
-        IContainer Register<TType>(string key)
-            where TType : class;
-
-        /// <summary>
-        /// Register this instance.
-        /// </summary>
-        /// <returns>The register.</returns>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
-        IContainer Register<TInterface, TType>()
-            where TInterface : class
-            where TType : class, TInterface;
-
-        /// <summary>
-        /// Register the specified key.
-        /// </summary>
-        /// <returns>The register.</returns>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
-        IContainer Register<TInterface, TType>(string key)
-            where TInterface : class
-            where TType : class, TInterface;
-
-        /// <summary>
-        /// Register the specified factory.
-        /// </summary>
-        /// <returns>The register.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        IContainer Register<TInterface>(Func<IContainer, TInterface> factory)
-            where TInterface : class;
-
-        /// <summary>
-        /// Register the specified factory and key.
-        /// </summary>
-        /// <returns>The register.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        IContainer Register<TInterface>(Func<IContainer, TInterface> factory, string key)
-            where TInterface : class;
-
-        /// <summary>
-        /// Register the specified factory.
-        /// </summary>
-        /// <returns>The register.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        IContainer Register<TInterface>(Func<IContainer, ResolutionContext, TInterface> factory)
-            where TInterface : class;
-
-        /// <summary>
-        /// Register the specified factory and key.
-        /// </summary>
-        /// <returns>The register.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        IContainer Register<TInterface>(Func<IContainer, ResolutionContext, TInterface> factory, string key)
-            where TInterface : class;
-
-        /// <summary>
-        /// Register the specified interfaceType and asType.
+        /// Register the specified interfaceType, instance and key.
         /// </summary>
         /// <returns>The register.</returns>
         /// <param name="interfaceType">Interface type.</param>
-        /// <param name="asType">As type.</param>
-        IContainer Register(Type interfaceType, Type asType);
+        /// <param name="instance">Instance.</param>
+        /// <param name="key">Key.</param>
+        IContainer Register(Type interfaceType, object instance, string key);
 
         /// <summary>
-        /// Register the specified interfaceType, asType and key.
+        /// Register the specified interfaceType, asType, key and singleton.
         /// </summary>
         /// <returns>The register.</returns>
         /// <param name="interfaceType">Interface type.</param>
         /// <param name="asType">As type.</param>
         /// <param name="key">Key.</param>
-        IContainer Register(Type interfaceType, Type asType, string key);
+        /// <param name="singleton">If set to <c>true</c> singleton.</param>
+        IContainer Register(Type interfaceType, Type asType, string key, bool singleton);
 
         /// <summary>
-        /// Registers the singleton.
+        /// Register the specified interfaceType, factory, key and singleton.
         /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <typeparam name="TType">The 1st type parameter.</typeparam>
-        IContainer RegisterSingleton<TType>()
-            where TType : class;
-
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
-        IContainer RegisterSingleton<TInterface, TType>()
-            where TType : class, TInterface;
-
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
-        IContainer RegisterSingleton<TInterface, TType>(string key)
-            where TType : class, TInterface;
-
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="instance">Instance.</param>
-        /// <typeparam name="TType">The 1st type parameter.</typeparam>
-        IContainer RegisterSingleton<TType>(TType instance)
-            where TType : class;
-
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="instance">Instance.</param>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TType">The 1st type parameter.</typeparam>
-        IContainer RegisterSingleton<TType>(TType instance, string key)
-            where TType : class;
-
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="instance">Instance.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
-        IContainer RegisterSingleton<TInterface, TType>(TType instance)
-            where TType : class, TInterface;
-
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="instance">Instance.</param>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
-        IContainer RegisterSingleton<TInterface, TType>(TType instance, string key)
-            where TType : class, TInterface;
-
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <typeparam name="TType">The 1st type parameter.</typeparam>
-        IContainer RegisterSingleton<TType>(Func<IContainer, TType> factory)
-            where TType : class;
-
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TType">The 1st type parameter.</typeparam>
-        IContainer RegisterSingleton<TType>(Func<IContainer, TType> factory, string key)
-            where TType : class;
-
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <typeparam name="TType">The 1st type parameter.</typeparam>
-        IContainer RegisterSingleton<TType>(Func<IContainer, ResolutionContext, TType> factory)
-            where TType : class;
-
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TType">The 1st type parameter.</typeparam>
-        IContainer RegisterSingleton<TType>(Func<IContainer, ResolutionContext, TType> factory, string key)
-            where TType : class;
-
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
-        IContainer RegisterSingleton<TInterface, TType>(Func<IContainer, TType> factory)
-            where TType : class, TInterface;
-
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
-        IContainer RegisterSingleton<TInterface, TType>(Func<IContainer, TType> factory, string key)
-            where TType : class, TInterface;
-
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
-        IContainer RegisterSingleton<TInterface, TType>(Func<IContainer, ResolutionContext, TType> factory)
-            where TType : class, TInterface;
-
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="factory">Factory.</param>
-        /// <param name="key">Key.</param>
-        /// <typeparam name="TInterface">The 1st type parameter.</typeparam>
-        /// <typeparam name="TType">The 2nd type parameter.</typeparam>
-        IContainer RegisterSingleton<TInterface, TType>(Func<IContainer, ResolutionContext, TType> factory, string key)
-            where TType : class, TInterface;
-
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="asType">As type.</param>
-        IContainer RegisterSingleton(Type asType);
-
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="asType">As type.</param>
-        /// <param name="key">Key.</param>
-        IContainer RegisterSingleton(Type asType, string key);
-
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
+        /// <returns>The register.</returns>
         /// <param name="interfaceType">Interface type.</param>
-        /// <param name="asType">As type.</param>
-        IContainer RegisterSingleton(Type interfaceType, Type asType);
-
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="interfaceType">Interface type.</param>
-        /// <param name="asType">As type.</param>
+        /// <param name="factory">Factory.</param>
         /// <param name="key">Key.</param>
-        IContainer RegisterSingleton(Type interfaceType, Type asType, string key);
+        /// <param name="singleton">If set to <c>true</c> singleton.</param>
+        /// <typeparam name="TType">The 1st type parameter.</typeparam>
+        IContainer Register<TType>(Type interfaceType, Func<IContainer, TType> factory, string key, bool singleton)
+            where TType : class;
 
         /// <summary>
-        /// Registers the singleton.
+        /// Register the specified interfaceType, factory, key and singleton.
         /// </summary>
-        /// <returns>The singleton.</returns>
+        /// <returns>The register.</returns>
         /// <param name="interfaceType">Interface type.</param>
-        /// <param name="instance">Instance.</param>
-        IContainer RegisterSingleton(Type interfaceType, object instance);
-
-        /// <summary>
-        /// Registers the singleton.
-        /// </summary>
-        /// <returns>The singleton.</returns>
-        /// <param name="interfaceType">Interface type.</param>
-        /// <param name="instance">Instance.</param>
+        /// <param name="factory">Factory.</param>
         /// <param name="key">Key.</param>
-        IContainer RegisterSingleton(Type interfaceType, object instance, string key);
+        /// <param name="singleton">If set to <c>true</c> singleton.</param>
+        /// <typeparam name="TType">The 1st type parameter.</typeparam>
+        IContainer Register<TType>(Type interfaceType, Func<IContainer, ResolutionContext, TType> factory, string key, bool singleton)
+            where TType : class;
 
         /// <summary>
         /// Resolve the specified overrides.
