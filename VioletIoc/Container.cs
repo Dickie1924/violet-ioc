@@ -214,6 +214,12 @@ namespace VioletIoc
             where TInterface : class
             => Register<object>(typeof(TInterface), factory, false);
 
+        public IContainer Register(Type interfaceType, Func<IContainer, object> factory)
+            => Register<object>(interfaceType, factory, false);
+
+        public IContainer Register(Type interfaceType, Func<IContainer, ResolutionContext, object> factory)
+            => Register<object>(interfaceType, factory, false);
+
         public IContainer Register<TInterface, TType>(Func<IContainer, TType> factory)
             where TType : class, TInterface
             => Register<TType>(typeof(TInterface), factory, false);
@@ -342,15 +348,16 @@ namespace VioletIoc
                 tracer?.Add($"Creating with arguments [{string.Join(",", ctorParams.Select(p => p?.ToString() ?? "null"))}].");
 
                 instance = Activator.CreateInstance(type, ctorParams);
-                if (instance is IDisposable disposable)
-                {
-                    tracer?.Add($"Instance marked for later disposal.");
-                    _disposables.Add(disposable);
-                }
             }
             catch (Exception ex)
             {
                 throw new ContainerResolutionException(type, ex);
+            }
+
+            if (instance is IDisposable disposable)
+            {
+                tracer?.Add($"Instance marked for later disposal.");
+                _disposables.Add(disposable);
             }
 
             return instance;

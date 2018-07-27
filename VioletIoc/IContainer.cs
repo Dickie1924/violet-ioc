@@ -140,6 +140,22 @@ namespace VioletIoc
         IContainer Register(Type interfaceType, Type asType);
 
         /// <summary>
+        /// Register the specified interfaceType and factory.
+        /// </summary>
+        /// <returns>The register.</returns>
+        /// <param name="interfaceType">Interface type.</param>
+        /// <param name="factory">Factory.</param>
+        IContainer Register(Type interfaceType, Func<IContainer, object> factory);
+
+        /// <summary>
+        /// Register the specified interfaceType and factory.
+        /// </summary>
+        /// <returns>The register.</returns>
+        /// <param name="interfaceType">Interface type.</param>
+        /// <param name="factory">Factory.</param>
+        IContainer Register(Type interfaceType, Func<IContainer, ResolutionContext, object> factory);
+
+        /// <summary>
         /// Registers the singleton.
         /// </summary>
         /// <returns>The singleton.</returns>
